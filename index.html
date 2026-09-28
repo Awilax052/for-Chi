@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A little flower for you 🌸</title>
+
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,600&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ---------- Colour tokens ---------- */
+  :root {
+    --blush: #fff1f5;
+    --petal-light: #ffd6e3;
+    --rose: #ff8fb1;
+    --magenta: #e2457f;
+    --ink: #7a2148;
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--ink);
+    /* Soft pastel gradient background */
+    background:
+      radial-gradient(60% 40% at 20% 10%, #ffe0ec 0%, transparent 70%),
+      radial-gradient(50% 40% at 85% 90%, #ffd0e2 0%, transparent 70%),
+      linear-gradient(180deg, #fff6f9 0%, #ffe9f1 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .serif { font-family: 'Fraunces', Georgia, serif; font-style: italic; }
+
+  
+  #flower { width: min(88vw, 380px); height: auto; overflow: visible; touch-action: manipulation; }
+  #sway { transform-origin: 200px 600px; transform-box: view-box; animation: sway 6s ease-in-out infinite; }
+  @keyframes sway { 0%,100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+
+  #head { filter: drop-shadow(0 0 14px rgba(255,120,170,.45)); animation: glow 4s ease-in-out infinite; }
+  @keyframes glow {
+    0%,100% { filter: drop-shadow(0 0 10px rgba(255,120,170,.35)); }
+    50%     { filter: drop-shadow(0 0 22px rgba(255,100,160,.65)); }
+  }
+
+  
+  .petal-shape {
+    transform-origin: 200px 200px; transform-box: view-box;
+    transform: scale(0);
+    animation: bloom 1.4s cubic-bezier(.2,1.2,.4,1) forwards;
+    animation-delay: var(--d, 0s);
+    cursor: pointer;
+    transition: filter .2s;
+  }
+  .petal-shape:hover { filter: brightness(1.08) saturate(1.15); }
+  @keyframes bloom { to { transform: scale(1); } }
+
+  /* Clicked petal floats outward, then regrows */
+  .petal-shape.drift { animation: drift 3.2s ease-in forwards; pointer-events: none; }
+  @keyframes drift {
+    0%   { transform: scale(1) translate(0,0) rotate(0); opacity: 1; }
+    100% { transform: scale(.7) translate(30px,-120px) rotate(40deg); opacity: 0; }
+  }
+  .petal-shape.regrow { animation: bloom 1.6s cubic-bezier(.2,1.2,.4,1) forwards; animation-delay: 0s; }
+
+  #center { transform-origin: 200px 200px; transform-box: view-box; cursor: pointer; animation: pulse 3s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+  /* ---------- Floating hearts ---------- */
+  .pop {
+    position: fixed; pointer-events: none; z-index: 50;
+    animation: rise 1.6s ease-out forwards;
+    text-shadow: 0 0 8px rgba(255,255,255,.8);
+  }
+  @keyframes rise {
+    0%   { transform: translate(-50%,-50%) scale(.3); opacity: 0; }
+    15%  { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--x)), calc(-50% - var(--y))) scale(1.1) rotate(var(--r)); opacity: 0; }
+  }
+
+  /* ---------- Compliment text ---------- */
+  #compliment { transition: opacity .35s, transform .35s; }
+  #compliment.swap { opacity: 0; transform: translateY(6px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    #sway, #head, #center { animation: none; }
+    .petal-shape { animation-duration: .01s; }
+  }
+</style>
+</head>
+
+<body>
+  <main class="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center">
+
+    <!-- ===== EDITABLE: heading ===== -->
+    <h1 id="title" class="serif text-3xl sm:text-4xl font-semibold mb-1"></h1>
+    <p id="hint" class="text-sm opacity-70 mb-4"></p>
+
+    <!-- ===== The flower (SVG is built in JS below) ===== -->
+    <svg id="flower" viewBox="0 0 400 620" aria-label="An interactive pink flower. Tap the petals.">
+      <defs>
+        <radialGradient id="gOuter" cx="50%" cy="100%" r="100%">
+          <stop offset="0%"  stop-color="#e2457f"/>
+          <stop offset="60%" stop-color="#ff8fb1"/>
+          <stop offset="100%" stop-color="#ffc2d6"/>
+        </radialGradient>
+        <radialGradient id="gMid" cx="50%" cy="100%" r="100%">
+          <stop offset="0%"  stop-color="#f0629a"/>
+          <stop offset="70%" stop-color="#ffa9c5"/>
+          <stop offset="100%" stop-color="#ffdce8"/>
+        </radialGradient>
+        <radialGradient id="gInner" cx="50%" cy="100%" r="100%">
+          <stop offset="0%"  stop-color="#ff7aa8"/>
+          <stop offset="100%" stop-color="#ffe6ee"/>
+        </radialGradient>
+        <radialGradient id="gCenter" cx="40%" cy="35%" r="70%">
+          <stop offset="0%"  stop-color="#fff3c9"/>
+          <stop offset="100%" stop-color="#ffb84d"/>
+        </radialGradient>
+        <linearGradient id="gStem" x1="0" x2="1">
+          <stop offset="0%" stop-color="#7fbf8f"/><stop offset="100%" stop-color="#4f9a6a"/>
+        </linearGradient>
+      </defs>
+
+      <g id="sway">
+        <!-- stem + leaves -->
+        <path d="M200 260 C 190 380, 210 490, 200 610" stroke="url(#gStem)" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M203 470 C 260 440, 300 450, 320 410 C 270 400, 225 420, 203 470Z" fill="#7fc79a" opacity=".95"/>
+        <path d="M197 400 C 140 375, 100 385, 80 345 C 130 335, 178 355, 197 400Z" fill="#6fb98b" opacity=".95"/>
+
+        <g id="head"><g id="petals"></g>
+          <!-- center of the flower -->
+          <g id="center">
+            <circle cx="200" cy="200" r="26" fill="url(#gCenter)"/>
+            <g id="dots" fill="#e08a1e" opacity=".7"></g>
+          </g>
+        </g>
+      </g>
+    </svg>
+
+    
+    <p id="compliment" class="serif text-xl sm:text-2xl min-h-[3.5rem] max-w-md"></p>
+
+    
+    <p id="note" class="mt-6 max-w-sm text-base leading-relaxed opacity-90"></p>
+    <p id="sign" class="serif mt-3 text-lg"></p>
+  </main>
+
+<script>
+
+const CONFIG = {
+  title:  "A  simple flower for u chi :3 🌸",
+  hint:   "psst… try tapping the petals",
+  note:   "I just made this 'cause, yeah  you said you like flowers ee and i think magugustuhan mo tho its just simple lang.",
+  sign:   "— Chiii",
+  
+  compliments: [
+    "I rlly love kung paano ka ngumiti whehehez",
+    "Talking to you makes me happy tbh kahit saglit lang qwq",
+    "You're so prettyyy arhghhh than you think",
+    "My one of a kind, adorable Chi ",
+    "You make ordinary days feel nicerrrrrrrrr ngl",
+    "Your laugh should be illegal (in a good way)",
+    "Fun fact: ure my type :P",
+    "Pretty mo ngl frfr WHAHAHAHA",
+    "You just made this flower blush whehehz",
+    "Plot twist: I'd like to get to know you more"
+  ],
+  hearts: ["💗","💖","🌸","✨","💕","🌷"]
+};
+
+
+document.getElementById('title').textContent = CONFIG.title;
+document.getElementById('hint').textContent  = CONFIG.hint;
+document.getElementById('note').textContent  = CONFIG.note;
+document.getElementById('sign').textContent  = CONFIG.sign;
+document.title = CONFIG.title;
+
+
+const NS = 'http://www.w3.org/2000/svg';
+const petalsG = document.getElementById('petals');
+
+
+const petalPath = len => {
+  const w = len * 0.36;
+  return `M200 200 C ${200 - w} ${200 - len * .35}, ${200 - w * .8} ${200 - len}, 200 ${200 - len}
+          C ${200 + w * .8} ${200 - len}, ${200 + w} ${200 - len * .35}, 200 200Z`;
+};
+
+
+const rings = [
+  [8, 150, 0,    'gOuter', 0.0],
+  [8, 118, 22.5, 'gMid',   0.35],
+  [6,  82, 10,   'gInner', 0.7]
+];
+
+rings.forEach(([count, len, offset, grad, delay]) => {
+  for (let i = 0; i < count; i++) {
+    const angle = offset + (360 / count) * i;
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('transform', `rotate(${angle} 200 200)`);   
+
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', petalPath(len));
+    p.setAttribute('fill', `url(#${grad})`);
+    p.setAttribute('stroke', 'rgba(255,255,255,.55)');
+    p.setAttribute('stroke-width', '1.5');
+    p.setAttribute('class', 'petal-shape');
+    p.style.setProperty('--d', (delay + i * 0.06) + 's');
+    p.addEventListener('animationend', e => {                  
+      if (e.animationName === 'bloom') { p.style.transform = 'scale(1)'; p.classList.remove('regrow'); }
+    });
+    p.addEventListener('pointerdown', e => petalTap(e, p));
+    g.appendChild(p);
+    petalsG.appendChild(g);
+  }
+});
+
+
+const dots = document.getElementById('dots');
+for (let i = 0; i < 14; i++) {
+  const a = i * 2.4, r = 5 + (i % 5) * 3.6;
+  const c = document.createElementNS(NS, 'circle');
+  c.setAttribute('cx', 200 + Math.cos(a) * r);
+  c.setAttribute('cy', 200 + Math.sin(a) * r);
+  c.setAttribute('r', 1.6);
+  dots.appendChild(c);
+}
+
+
+let deck = [];                                  
+function nextCompliment() {
+  if (!deck.length) deck = [...CONFIG.compliments].sort(() => Math.random() - .5);
+  return deck.pop();
+}
+
+const compEl = document.getElementById('compliment');
+function say(text) {
+  compEl.classList.add('swap');
+  setTimeout(() => { compEl.textContent = text; compEl.classList.remove('swap'); }, 250);
+}
+
+function burst(x, y, count = 6) {
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    s.className = 'pop';
+    s.textContent = CONFIG.hearts[Math.floor(Math.random() * CONFIG.hearts.length)];
+    s.style.left = x + 'px'; s.style.top = y + 'px';
+    s.style.fontSize = (16 + Math.random() * 16) + 'px';
+    s.style.setProperty('--x', (Math.random() * 120 - 60) + 'px');
+    s.style.setProperty('--y', (50 + Math.random() * 110) + 'px');
+    s.style.setProperty('--r', (Math.random() * 60 - 30) + 'deg');
+    s.style.animationDelay = (i * 0.05) + 's';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 2000);
+  }
+}
+
+function petalTap(e, petal) {
+  burst(e.clientX, e.clientY, 5);
+  say(nextCompliment());
+  petal.classList.remove('regrow');
+  petal.style.transform = '';
+  petal.classList.add('drift');                 
+  setTimeout(() => {                            
+    petal.classList.remove('drift');
+    petal.classList.add('regrow');
+  }, 3300);
+}
+
+
+document.getElementById('center').addEventListener('pointerdown', e => {
+  burst(e.clientX, e.clientY, 12);
+  say(nextCompliment());
+});
+
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const r = document.getElementById('flower').getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height * 0.32, 8);
+  }, 2000);
+});
+</script>
+</body>
+</html>
